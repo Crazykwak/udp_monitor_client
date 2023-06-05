@@ -1,4 +1,4 @@
-package com.odinues.m1customerApi.kbcard;
+package com;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -7,7 +7,6 @@ import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
