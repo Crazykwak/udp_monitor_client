@@ -1,4 +1,4 @@
-package com.odinues.m1customerApi.kbcard;
+package com;
 
 import java.io.IOException;
 import java.util.Map;
