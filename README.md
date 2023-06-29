@@ -26,7 +26,7 @@ colArray의 밸류는 배열로
 
 #### 3. 실행 환경변수
 
-> java -DcolColor=30 -DcolBgColor=47 -Dcolor=37 -Dhost=127.0.0.1 -Dport=$PORT {경로}.com.Monitor
+> java -DcolColor=30 -DcolBgColor=47 -Dcolor=37 -Dhost=127.0.0.1 -Dport=$PORT {경로}.com.odinues.m1customerApi.kbcard.Monitor
 
 colColor = 컬럼 색
 colBgColor = 컬럼 배경색

@@ -1,23 +1,22 @@
-package com;
-
-import java.util.Map;
+package com.odinues.m1customerApi.kbcard;
 
 import static java.lang.Thread.sleep;
 public class DataConsoleWriter {
 
-    private DataReceiverThread dataReceiverThread;
     private String[] columnArray;
     private final String equalLineString = "============================================================================================================\n";
     private int lineSize = 0;
     private String columnBackGround = "\033[47m";
     private String columnColor = "\033[1;30m";
     private String dataColor = "\u001B[36m";
-    private Map<String, String> monitoringDataStore = null;
+    private String pad = "%20s";
+    private String bar = "|";
+
+    private DataStore dataStore = null;
     private int sleepMilsTime = 500;
 
-    public DataConsoleWriter(DataReceiverThread dataReceiverThread, Map<String, String> monitoringDataStore) {
-        this.dataReceiverThread = dataReceiverThread;
-        this.monitoringDataStore = monitoringDataStore;
+    public DataConsoleWriter(DataStore dataStore) {
+        this.dataStore = dataStore;
     }
 
     public void setColumnBackGround(String columnBackGround) {
@@ -38,15 +37,11 @@ public class DataConsoleWriter {
 
     private void setLineSize() {
         lineSize = 0;
-        for (String column : columnArray) {
+        for (String column : dataStore.getColumnArray()) {
             if (column.equals("/")) {
                 lineSize++;
             }
         }
-    }
-
-    private void setColumnArrayByDataReceiverThread() {
-        columnArray = dataReceiverThread.getColumnArray();
     }
 
     /**
@@ -60,15 +55,13 @@ public class DataConsoleWriter {
             System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
             while (true) {
 
-                if (columnArray == null) {
-                    setColumnArrayByDataReceiverThread();
+                if (dataStore.getColumnArray() == null) {
                     sleep(100);
                     continue;
                 }
 
-                if (lineSize == 0) {
-                    setLineSize();
-                }
+                dataStore.getColumnArray();
+                setLineSize();
 
                 columnHeaderSysOut();
                 // columnArray 에서 "/" 개수 + 1이 출력될 줄임. column + data 를 생각하면 1 컬럼당 2줄이 필요
@@ -81,7 +74,10 @@ public class DataConsoleWriter {
 
                 // 콘솔 출력 주기임. sleep를 제거할 시 커서가 엄청난 속도로 깜빡이기 때문에
                 // 적당한 조절이 필요함.
+                System.out.flush();
                 sleep(sleepMilsTime);
+                Util.refreshConsole();
+
             }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -90,27 +86,23 @@ public class DataConsoleWriter {
 
     private void odinueLogoSysOut() {
         String date = Util.getDate();
-        System.out.print(equalLineString);
-        System.out.print("= Odinue M1 E2E Monitor Release 0.20                                 현재시각 " + date +"          =\n");
-        System.out.print(equalLineString);
+        System.out.printf(equalLineString);
+        System.out.printf("= Odinue M1 E2E Monitor Release 0.20                                 현재시각 " + date +"          =\n");
+        System.out.printf(equalLineString);
     }
 
     private void columnHeaderSysOut() {
         odinueLogoSysOut();
-
-        String pad = "%20s";
-        String bar = " |";
         StringBuilder sb = new StringBuilder();
         sb.append(columnBackGround);
         sb.append(columnColor);
-
+        columnArray = dataStore.getColumnArray();
         for (int i = 0; i < columnArray.length; i++) {
             String target = columnArray[i];
 
             if (target.equals("/")) {
                 sb.append(Util.RESET);
-                System.out.println(sb.toString());
-                System.out.println();
+                System.out.printf(sb.toString() + "\n\n");
                 sb.setLength(0);
                 sb.append(columnBackGround + columnColor);
                 continue;
@@ -118,14 +110,12 @@ public class DataConsoleWriter {
             sb.append(String.format(pad, target + bar));
         }
         sb.append(Util.RESET);
-        System.out.println(sb.toString());
+        System.out.printf(sb.toString() + "\n");
 
     }
 
     private void monitoringDataSysOut() {
         StringBuilder sb = new StringBuilder();
-        String pad = "%20s";
-        String bar = "  |";
 
         sb.append(dataColor);
         for (int i = 0; i < columnArray.length; i++) {
@@ -136,14 +126,14 @@ public class DataConsoleWriter {
                 sb.setLength(0);
                 continue;
             }
-            String value = monitoringDataStore.get(target) == null ? "" : String.valueOf(monitoringDataStore.get(target));
+            String value = dataStore.get(target) == null ? "" : String.valueOf(dataStore.get(target));
             sb.append(String.format(pad, value + bar));
         }
         sb.append(Util.RESET);
-        System.out.println(sb.toString());
+        System.out.printf(sb.toString() + "\n");
     }
     private void endLineSysOut() {
-        String currentDate = monitoringDataStore.get("currentDate");
-        System.out.print("== 최근 통신 시간 : " + currentDate + " =====================================================================\n");
+        String currentDate = dataStore.get("currentDate");
+        System.out.printf("== 최근 통신 시간 : " + currentDate + " =====================================================================\n");
     }
 }

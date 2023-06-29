@@ -1,17 +1,13 @@
-package com;
+package com.odinues.m1customerApi.kbcard;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class DataReceiverThread extends Thread {
+public class DataReceiverByUDPThread extends DataReceiver {
 
     private final int receiveSize = 1024 * 5;
     private final byte[] sendBytes = new byte[10];
@@ -20,8 +16,7 @@ public class DataReceiverThread extends Thread {
     private DatagramPacket receive;
     private DatagramSocket ds;
     private JSONParser parser = new JSONParser();
-    private Map<String, String> monitoringDataStore;
-    private String[] columnArray;
+    private DataStore dataStore;
     private String currentDate;
 
     @Override
@@ -42,17 +37,14 @@ public class DataReceiverThread extends Thread {
                     String data = new String(receive.getData(), 0, receive.getLength());
                     JSONObject jsonObject = (JSONObject) parser.parse(data);
 
-                    if (columnArray == null) {
-                        getAndSetColArray(jsonObject);
-                        sleep(100);
-                        continue;
+                    dataStore.getAndSetColArray(jsonObject);
+
+                    for (String target : dataStore.getColumnArray() ) {
+                        dataStore.put(target, String.valueOf(jsonObject.getOrDefault(target, "")));
                     }
 
-                    for (String target : columnArray) {
-                        monitoringDataStore.put(target, String.valueOf(jsonObject.getOrDefault(target, "")));
-                    }
                     currentDate = Util.getDate();
-                    monitoringDataStore.put("currentDate", currentDate);
+                    dataStore.put("currentDate", currentDate);
                     sleep(1000);
                 }
             } catch (SocketTimeoutException e) {
@@ -67,34 +59,10 @@ public class DataReceiverThread extends Thread {
         }
     }
 
-    private void getAndSetColArray(JSONObject jsonObject) {
-        JSONArray jsonArray = (JSONArray) jsonObject.get("colArray");
-        if (jsonArray != null && (jsonArray.getClass().isArray() || jsonArray instanceof List)) {
-            columnArray = jsonArrayToStringArray(jsonArray);
-        }
-    }
-
-    private String[] jsonArrayToStringArray(JSONArray jsonArray) {
-        String[] arr = new String[jsonArray.size()];
-        for (int i = 0; i < jsonArray.size(); i++) {
-            arr[i] = (String) jsonArray.get(i);
-        }
-        return arr;
-    }
-
-    public DataReceiverThread(String host, int port) throws UnknownHostException, SocketException {
+    public DataReceiverByUDPThread(String host, int port, DataStore dataStore) throws UnknownHostException, SocketException {
         InetAddress inetAddress = InetAddress.getByName(host);
         send = new DatagramPacket(sendBytes, sendBytes.length, inetAddress, port);
         receive = new DatagramPacket(receiveBytes, receiveBytes.length);
         ds = new DatagramSocket();
-        monitoringDataStore = new ConcurrentHashMap<>();
-    }
-
-    public Map<String, String> getMonitoringDataStore() {
-        return monitoringDataStore;
-    }
-
-    public String[] getColumnArray() {
-        return columnArray;
     }
 }
